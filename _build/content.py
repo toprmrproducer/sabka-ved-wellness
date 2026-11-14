@@ -6,7 +6,7 @@ DOCTOR = 'Dr. Aditya Kunal'
 DOCTOR_FULL = 'Dr. Aditya Kunal, BAMS'
 DOCTOR_SITE = 'https://sabka-ved.pages.dev'
 PLACE = 'Near Bajrang Puri, Patna, Bihar'
-SITE_URL = 'https://toprmrproducer.github.io/sabka-ved-wellness/'
+SITE_URL = 'https://panchakarma.dradityakunal.com/'
 MAPS = 'https://www.google.com/maps/search/?api=1&query=Bajrang+Puri+Patna+Bihar'
 
 CONTRA = ('Panchakarma is usually avoided or postponed during pregnancy, acute fever or infection, '

@@ -1160,7 +1160,11 @@ def build_page(raw_name, out_rel, depth, fn, seo, *args):
     out_html = out_html.replace('<!-- Smooth Scrolling -->', '')
     out_html = out_html.replace('css/medara-template.webflow.shared.67a261262.css', 'css/' + CSS_NAME)
     if seo.get('base'):
-        out_html = out_html.replace('<head>', f'<head><base href="{seo["base"]}"/>', 1)
+        # 404 is served for any missing path, so pin relative URLs to the site root. Works on the custom
+        # domain (root) and on the GitHub Pages project path.
+        out_html = out_html.replace('<head>', '<head><script>document.write(\'<base href="\' + '
+                                    '(location.pathname.indexOf("/sabka-ved-wellness/") === 0 ? "/sabka-ved-wellness/" : "/") '
+                                    '+ \'"/>\')</script>', 1)
     path = os.path.join(OUT, out_rel)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     open(path, 'w').write(out_html)
