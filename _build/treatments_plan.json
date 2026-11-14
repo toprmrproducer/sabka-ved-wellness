@@ -1,0 +1,368 @@
+[
+ {
+  "n": 1,
+  "group": "Purva Karma",
+  "name": "Paachana (digestion of toxins before therapy)",
+  "slug": "paachana-deepana"
+ },
+ {
+  "n": 2,
+  "group": "Purva Karma",
+  "name": "Snehapana (internal oleation with medicated ghee)",
+  "slug": "snehapana"
+ },
+ {
+  "n": 3,
+  "group": "Purva Karma",
+  "name": "Abhyanga (full-body oil massage)",
+  "slug": "abhyanga"
+ },
+ {
+  "n": 4,
+  "group": "Purva Karma",
+  "name": "Swedana (therapeutic sweating)",
+  "slug": "swedana"
+ },
+ {
+  "n": 5,
+  "group": "Purva Karma",
+  "name": "Nadi Sweda (localised herbal steam)",
+  "slug": "nadi-sweda"
+ },
+ {
+  "n": 6,
+  "group": "Purva Karma",
+  "name": "Bashpa Sweda (herbal steam chamber)",
+  "slug": "bashpa-sweda"
+ },
+ {
+  "n": 7,
+  "group": "Purva Karma",
+  "name": "Pinda Sweda / Kizhi (herbal bolus fomentation)",
+  "slug": "pinda-sweda-kizhi"
+ },
+ {
+  "n": 8,
+  "group": "Purva Karma",
+  "name": "Pizhichil / Sarvanga Dhara / Parisheka (warm oil pouring)",
+  "slug": "pizhichil-sarvanga-dhara"
+ },
+ {
+  "n": 9,
+  "group": "Pradhana Karma",
+  "name": "Vamana (therapeutic emesis)",
+  "slug": "vamana"
+ },
+ {
+  "n": 10,
+  "group": "Pradhana Karma",
+  "name": "Virechana (therapeutic purgation)",
+  "slug": "virechana"
+ },
+ {
+  "n": 11,
+  "group": "Pradhana Karma",
+  "name": "Anuvasana Basti (oil enema)",
+  "slug": "anuvasana-basti"
+ },
+ {
+  "n": 12,
+  "group": "Pradhana Karma",
+  "name": "Niruha / Asthapana Basti (decoction enema)",
+  "slug": "niruha-asthapana-basti"
+ },
+ {
+  "n": 13,
+  "group": "Pradhana Karma",
+  "name": "Nasya / Shirovirechana (nasal therapy)",
+  "slug": "nasya"
+ },
+ {
+  "n": 14,
+  "group": "Pradhana Karma",
+  "name": "Raktamokshana (therapeutic bloodletting)",
+  "slug": "raktamokshana"
+ },
+ {
+  "n": 15,
+  "group": "Pradhana Karma",
+  "name": "Jalaukavacharana (leech therapy)",
+  "slug": "jalauka-leech-therapy"
+ },
+ {
+  "n": 16,
+  "group": "Pradhana Karma",
+  "name": "Siravedha (venesection)",
+  "slug": "siravedha"
+ },
+ {
+  "n": 17,
+  "group": "Pradhana Karma",
+  "name": "Uttar Basti (uro-genital basti, gynaecology and urology)",
+  "slug": "uttar-basti"
+ },
+ {
+  "n": 18,
+  "group": "Local Basti",
+  "name": "Kati Basti (lower back)",
+  "slug": "kati-basti"
+ },
+ {
+  "n": 19,
+  "group": "Local Basti",
+  "name": "Janu Basti (knee)",
+  "slug": "janu-basti"
+ },
+ {
+  "n": 20,
+  "group": "Local Basti",
+  "name": "Greeva / Manya Basti (neck)",
+  "slug": "greeva-basti"
+ },
+ {
+  "n": 21,
+  "group": "Local Basti",
+  "name": "Hrid Basti (chest and heart region)",
+  "slug": "hrid-basti"
+ },
+ {
+  "n": 22,
+  "group": "Local Basti",
+  "name": "Netra Basti / Akshi Tarpana pooling (eye)",
+  "slug": "netra-basti"
+ },
+ {
+  "n": 23,
+  "group": "Local Basti",
+  "name": "Shiro Basti (oil pooled on the head)",
+  "slug": "shiro-basti"
+ },
+ {
+  "n": 24,
+  "group": "Local Basti",
+  "name": "Nabhi Basti (navel)",
+  "slug": "nabhi-basti"
+ },
+ {
+  "n": 25,
+  "group": "Dhara and External",
+  "name": "Shirodhara (oil stream on the forehead)",
+  "slug": "shirodhara"
+ },
+ {
+  "n": 26,
+  "group": "Dhara and External",
+  "name": "Dhanyamla Dhara (fermented grain wash pouring)",
+  "slug": "dhanyamla-dhara"
+ },
+ {
+  "n": 27,
+  "group": "Dhara and External",
+  "name": "Takra Dhara (medicated buttermilk pouring)",
+  "slug": "takra-dhara"
+ },
+ {
+  "n": 28,
+  "group": "Dhara and External",
+  "name": "Ksheera Dhara and Ksheera Dhooma (medicated milk pouring and milk steam)",
+  "slug": "ksheera-dhara-ksheeradhooma"
+ },
+ {
+  "n": 29,
+  "group": "Dhara and External",
+  "name": "Thalam (medicated paste on the crown)",
+  "slug": "thalam"
+ },
+ {
+  "n": 30,
+  "group": "Dhara and External",
+  "name": "Thalapothichil (herbal head pack)",
+  "slug": "thalapothichil"
+ },
+ {
+  "n": 31,
+  "group": "Dhara and External",
+  "name": "Annalepa (medicated rice paste application)",
+  "slug": "annalepa"
+ },
+ {
+  "n": 32,
+  "group": "Dhara and External",
+  "name": "Lepam (herbal paste application)",
+  "slug": "lepam"
+ },
+ {
+  "n": 33,
+  "group": "Dhara and External",
+  "name": "Upanaha (warm poultice bandage)",
+  "slug": "upanaha"
+ },
+ {
+  "n": 34,
+  "group": "Dhara and External",
+  "name": "Avagaha (medicated tub bath)",
+  "slug": "avagaha"
+ },
+ {
+  "n": 35,
+  "group": "Dhara and External",
+  "name": "Shiro Abhyanga (head massage)",
+  "slug": "shiro-abhyanga"
+ },
+ {
+  "n": 36,
+  "group": "Dhara and External",
+  "name": "Padabhyanga (foot massage)",
+  "slug": "padabhyanga"
+ },
+ {
+  "n": 37,
+  "group": "Dhara and External",
+  "name": "Udvartana (herbal powder massage)",
+  "slug": "udvartana"
+ },
+ {
+  "n": 38,
+  "group": "Dhara and External",
+  "name": "Shiro Pichu (oil-soaked cloth on the head)",
+  "slug": "shiro-pichu"
+ },
+ {
+  "n": 39,
+  "group": "Dhara and External",
+  "name": "Pichu for back, joints and neck",
+  "slug": "pichu-back-joint-neck"
+ },
+ {
+  "n": 40,
+  "group": "Dhara and External",
+  "name": "Karna Poorana (ear oil therapy)",
+  "slug": "karna-poorana"
+ },
+ {
+  "n": 41,
+  "group": "Dhara and External",
+  "name": "Sekam / Parisheka (medicated liquid sprinkling)",
+  "slug": "sekam"
+ },
+ {
+  "n": 42,
+  "group": "Dhara and External",
+  "name": "Varti (medicated wicks)",
+  "slug": "varti"
+ },
+ {
+  "n": 43,
+  "group": "Dhara and External",
+  "name": "Agnikarma (therapeutic heat cauterisation)",
+  "slug": "agnikarma"
+ },
+ {
+  "n": 44,
+  "group": "Dhara and External",
+  "name": "Viddhakarma (therapeutic puncturing)",
+  "slug": "viddhakarma"
+ },
+ {
+  "n": 45,
+  "group": "Dhara and External",
+  "name": "Yoni Dhavan and Yoni Pichu (vaginal wash and tampon therapy)",
+  "slug": "yoni-dhavan-yoni-pichu"
+ },
+ {
+  "n": 46,
+  "group": "Mouth Nose Eye",
+  "name": "Kavala (medicated gargle)",
+  "slug": "kavala"
+ },
+ {
+  "n": 47,
+  "group": "Mouth Nose Eye",
+  "name": "Gandusha (holding medicated liquid in the mouth)",
+  "slug": "gandusha"
+ },
+ {
+  "n": 48,
+  "group": "Mouth Nose Eye",
+  "name": "Dhoomapana (medicated herbal smoke inhalation)",
+  "slug": "dhoomapana"
+ },
+ {
+  "n": 49,
+  "group": "Mouth Nose Eye",
+  "name": "Pratimarsha Nasya (daily mini nasal drops)",
+  "slug": "pratimarsha-nasya"
+ },
+ {
+  "n": 50,
+  "group": "Mouth Nose Eye",
+  "name": "Netra Tarpana (eye nourishment therapy)",
+  "slug": "netra-tarpana"
+ },
+ {
+  "n": 51,
+  "group": "Mouth Nose Eye",
+  "name": "Putapaka (eye therapy with herbal juices)",
+  "slug": "putapaka"
+ },
+ {
+  "n": 52,
+  "group": "Paschat Karma",
+  "name": "Peyadi Krama / Samsarjana Krama (graded diet after cleansing)",
+  "slug": "peyadi-samsarjana-krama"
+ },
+ {
+  "n": 53,
+  "group": "Paschat Karma",
+  "name": "Rasayana after Panchakarma (rejuvenation phase)",
+  "slug": "rasayana-after-panchakarma"
+ },
+ {
+  "n": 54,
+  "group": "Paschat Karma",
+  "name": "Yoga for Panchakarma recovery (shalabhasana, pawanmuktasana, bhujangasana, uddiyana bandha)",
+  "slug": "panchakarma-yoga-asanas"
+ },
+ {
+  "n": 55,
+  "group": "Paschat Karma",
+  "name": "Nadi Shodhana pranayama (alternate nostril breathing)",
+  "slug": "nadi-shodhana-pranayama"
+ },
+ {
+  "n": 56,
+  "group": "Guide",
+  "name": "Why is Panchakarma expensive? What you are really paying for",
+  "slug": "why-panchakarma-is-expensive"
+ },
+ {
+  "n": 57,
+  "group": "Location",
+  "name": "Best Panchakarma centre in Patna: how to choose",
+  "slug": "best-panchakarma-in-patna"
+ },
+ {
+  "n": 58,
+  "group": "Location",
+  "name": "Best Panchakarma in Bihar",
+  "slug": "best-panchakarma-in-bihar"
+ },
+ {
+  "n": 59,
+  "group": "Location",
+  "name": "Best Panchakarma for patients from Jharkhand",
+  "slug": "panchakarma-for-jharkhand-patients"
+ },
+ {
+  "n": 60,
+  "group": "Location",
+  "name": "Best Panchakarma for patients from Uttar Pradesh",
+  "slug": "panchakarma-for-uttar-pradesh-patients"
+ },
+ {
+  "n": 61,
+  "group": "Location",
+  "name": "Best Panchakarma for patients from Delhi",
+  "slug": "panchakarma-for-delhi-patients"
+ }
+]

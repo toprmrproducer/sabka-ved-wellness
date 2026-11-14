@@ -22,6 +22,9 @@ class ImageBank:
         self.made = {}
 
     def _open(self, name):
+        if os.path.isabs(name):
+            im = Image.open(name).convert('RGB')
+            return im, (0, 0) + im.size
         im = Image.open(os.path.join(SRC, name + '.jpg')).convert('RGB')
         W, H = im.size
         x0, y0, x1, y1 = 0, 0, W, H

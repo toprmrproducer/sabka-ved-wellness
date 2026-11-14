@@ -4,9 +4,19 @@ phone, hours or reviews. No em dashes."""
 BRAND = 'Sabka Ved Wellness'
 DOCTOR = 'Dr. Aditya Kunal'
 DOCTOR_FULL = 'Dr. Aditya Kunal, BAMS'
-DOCTOR_SITE = 'https://sabka-ved.pages.dev'
+DOCTOR_SITE = 'https://dradityakunal.com/'
 PLACE = 'Near Bajrang Puri, Patna, Bihar'
 SITE_URL = 'https://panchakarma.dradityakunal.com/'
+PHONE = '+919102000359'
+PHONE_DISPLAY = '+91 91020 00359'
+WA_LINK = 'https://wa.me/919102000359'
+BOOKING_URL = 'https://superprofile.bio/bookings/dradityakunal'
+MAP_EMBED = 'https://www.google.com/maps?q=Bajrangpuri,+Patna,+Bihar&output=embed'
+SOCIAL = [('Instagram', 'https://www.instagram.com/dr_aditya_kunal/'),
+          ('YouTube', 'https://www.youtube.com/@dr_aditya_kunal'),
+          ('Facebook', 'https://www.facebook.com/dr_aditya_kunal')]
+NAP_NAME = 'Sabka Ved Wellness'
+NAP_ADDRESS = 'near Bajrang Puri, Patna, Bihar'
 MAPS = 'https://www.google.com/maps/search/?api=1&query=Bajrang+Puri+Patna+Bihar'
 
 CONTRA = ('Panchakarma is usually avoided or postponed during pregnancy, acute fever or infection, '

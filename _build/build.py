@@ -45,6 +45,122 @@ FOCUS = {
 }
 
 PAGE_CHUNKS = {}
+
+PLAN = json.load(open(os.path.join(HERE, 'treatments_plan.json')))
+TX = {p['slug']: dict(json.load(open(os.path.join(HERE, 'treatments', p['slug'] + '.json'))), n=p['n'], group=p['group'])
+      for p in PLAN}
+TREATMENTS = [TX[p['slug']] for p in PLAN if p['group'] not in ('Location', 'Guide')]
+LOCATIONS = [TX[p['slug']] for p in PLAN if p['group'] == 'Location']
+GUIDES = [TX[p['slug']] for p in PLAN if p['group'] == 'Guide']
+GROUP_ORDER = ['Purva Karma', 'Pradhana Karma', 'Local Basti', 'Dhara and External', 'Mouth Nose Eye', 'Paschat Karma']
+GROUP_BLURB = {
+    'Purva Karma': 'Preparation: digestion, oleation and sweating that ready the body for the main procedure.',
+    'Pradhana Karma': 'The main cleansing procedures, always doctor-led and chosen only after assessment.',
+    'Local Basti': 'Warm medicated oil held over one area, such as the back, knees, neck or heart region.',
+    'Dhara and External': 'Streams, pours, boluses, packs and massages that work through the skin.',
+    'Mouth Nose Eye': 'Gentle therapies for the mouth, nose and eyes, including Kriyakalpa eye care.',
+    'Paschat Karma': 'Recovery: graded diet, rasayana, breathing and movement after the main therapy.',
+}
+# fallback photos per group until the generated treatment images land in assets/img/treatments/<slug>.jpg
+POOL = {
+    'Purva Karma': ['stock-golden-milk-spices', 'stock-shoulder-massage', 'doctor-preparing-herbs', 'doctor-dispensary-herbs'],
+    'Pradhana Karma': ['doctor-consult-desk-wide', 'doctor-with-patient-wide', 'doctor-preparing-herbs', 'doctor-manuscript-desk'],
+    'Local Basti': ['stock-shoulder-massage', 'doctor-portrait-white-coat', 'doctor-with-patient-wide'],
+    'Dhara and External': ['stock-shoulder-massage', 'doctor-green-kurta-herbs', 'stock-turmeric', 'stock-herbs-capsules',
+                           'doctor-dispensary-herbs'],
+    'Mouth Nose Eye': ['stock-herbs-capsules', 'doctor-green-kurta-herbs', 'doctor-manuscript-desk'],
+    'Paschat Karma': ['stock-golden-milk-spices', 'doctor-herb-garden-walk', 'stock-turmeric'],
+    'Location': ['doctor-clinic-nehru-jacket', 'doctor-herb-garden-walk', 'doctor-consult-desk-wide', 'doctor-with-patient-wide',
+                 'doctor-dispensary-herbs'],
+    'Guide': ['doctor-preparing-herbs'],
+}
+TX_IMG_DIR = os.path.join(OUT, 'assets', 'img', 'treatments')
+CORE_SERVICES = ['shirodhara', 'abhyanga', 'virechana', 'niruha-asthapana-basti', 'kati-basti', 'nasya', 'pizhichil-sarvanga-dhara']
+OLD_REDIRECTS = {'panchakarma-consultation': 'appointment/', 'basti': 'services/niruha-asthapana-basti/',
+                 'kati-basti-janu-basti': 'services/kati-basti/'}
+
+THEME_TOGGLE = ('<button type="button" class="theme-toggle" aria-label="Switch to dark theme" aria-pressed="false" '
+                'title="Dark theme"><svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+                'stroke-width="1.6" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/>'
+                '</svg><svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" '
+                'aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4'
+                'M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>')
+
+
+def url_for(slug):
+    t = TX.get(slug)
+    if t and t['group'] not in ('Location', 'Guide'):
+        return f'services/{slug}/'
+    return f'{slug}/'
+
+
+def short_name(name):
+    return name.split(' (')[0].strip()
+
+
+def paren(name):
+    m = re.search(r'\(([^)]*)\)', name)
+    return m.group(1) if m else ''
+
+
+def tx_image(t, which=0):
+    """(source, focus) for a treatment slot. Generated image wins when present."""
+    gen = os.path.join(TX_IMG_DIR, t['slug'] + '.jpg')
+    if which == 0 and os.path.exists(gen):
+        return gen, (0.5, 0.5)
+    pool = POOL[t['group']]
+    idx = [x['slug'] for x in TX.values() if x['group'] == t['group']].index(t['slug'])
+    name = pool[(idx + which) % len(pool)]
+    return name, FOCUS.get(name, (0.5, 0.5))
+
+
+def img_key(prefix, t, src):
+    if os.path.isabs(src):  # generated, per-page photo
+        return f"{prefix}-{t['slug']}"[:90]
+    return f"{prefix}-pool-{src}"  # shared fallback crop, generated once
+
+
+def map_html(title):
+    return (f'<div class="svw-map"><iframe src="{C.MAP_EMBED}" loading="lazy" title="{title}" '
+            f'referrerpolicy="no-referrer-when-downgrade" allowfullscreen=""></iframe></div>')
+
+
+def add_online_button(page, btn):
+    wrap = btn.parent
+    if 'button-wrap' not in wrap.get('class', []):
+        return
+    b2 = copy.copy(btn)
+    set_button(b2, 'Online Consult', C.BOOKING_URL, page)
+    b2['target'] = '_blank'
+    b2['rel'] = 'noopener'
+    b2['aria-label'] = 'Book an online consultation with Dr. Aditya Kunal on Superprofile (opens in a new tab)'
+    btn.insert_after(b2)
+    wrap['class'] = wrap.get('class', []) + ['svw-two']
+
+
+def tx_item(slug):
+    t = TX[slug]
+    src, foc = tx_image(t)
+    return dict(key=img_key('card', t, src), title=short_name(t['name']), href=url_for(slug),
+                category=t['group'] if t['group'] not in ('Location', 'Guide') else 'Guide',
+                date=paren(t['name'])[:40] if t['group'] not in ('Location', 'Guide') else 'Patna',
+                img=src, focus=foc)
+
+
+def links_ul(page, items):
+    ul = page.s.new_tag('ul')
+    for label, href in items:
+        li = page.s.new_tag('li')
+        a = page.s.new_tag('a', href=page.link(href))
+        a.string = label
+        li.append(a)
+        ul.append(li)
+    return ul
+
+
+LOCATION_LABELS = [('Patna', 'best-panchakarma-in-patna/'), ('Bihar', 'best-panchakarma-in-bihar/'),
+                   ('Jharkhand', 'panchakarma-for-jharkhand-patients/'),
+                   ('Uttar Pradesh', 'panchakarma-for-uttar-pradesh-patients/'), ('Delhi', 'panchakarma-for-delhi-patients/')]
 CSS_NAME = 'sabka-ved.webflow.shared.css'
 
 
@@ -109,7 +225,7 @@ def set_navlink(a, label, href, page):
     a['href'] = page.link(href)
 
 
-def put_img(page, img, key, name, aspect, focus=None, zoom=1.0, alt='', sizes=None, max_w=2000):
+def put_img(page, img, key, name, aspect, focus=None, zoom=1.0, alt='', sizes=None, max_w=1600):
     info = bank.make(key, name, aspect, focus or FOCUS.get(name, (0.5, 0.5)), zoom, max_w=max_w)
     img['src'] = page.asset(info['src'])
     if info['single']:
@@ -210,9 +326,12 @@ def build_head(page, title, desc, path, og_img, extra_ld=None, noindex=False, bo
     lds = [clinic_ld()] + (extra_ld or [])
     for ld in lds:
         frag.append('<script type="application/ld+json">' + json.dumps(ld, ensure_ascii=False) + '</script>')
+    frag.append(f'<script src="{page.asset("js/theme.js")}"></script>')
     if booking:
         # must load before webflow.js so its capture-phase submit listener wins
         frag.append(f'<script src="{page.asset("js/booking.js")}"></script>')
+    css = head.find('link', rel='stylesheet')
+    css.insert_after(BeautifulSoup(f'<link href="{page.asset("css/theme.css")}" rel="stylesheet" type="text/css"/>', 'html.parser'))
     meta_vp = head.find('meta', attrs={'name': 'viewport'})
     anchor = head.find('meta', attrs={'charset': True})
     new = BeautifulSoup(''.join(frag), 'html.parser')
@@ -235,11 +354,16 @@ def clinic_ld():
         'medicalSpecialty': 'Ayurvedic',
         'address': {'@type': 'PostalAddress', 'streetAddress': 'Near Bajrang Puri', 'addressLocality': 'Patna',
                     'addressRegion': 'Bihar', 'addressCountry': 'IN'},
-        'areaServed': {'@type': 'City', 'name': 'Patna'},
+        'areaServed': [{'@type': 'City', 'name': 'Patna'}, {'@type': 'State', 'name': 'Bihar'},
+                       {'@type': 'State', 'name': 'Jharkhand'}, {'@type': 'State', 'name': 'Uttar Pradesh'},
+                       {'@type': 'State', 'name': 'Delhi'}],
         'founder': {'@type': 'Person', 'name': C.DOCTOR, 'honorificSuffix': 'BAMS', 'url': C.DOCTOR_SITE},
         'employee': {'@type': 'Physician', 'name': C.DOCTOR, 'medicalSpecialty': 'Ayurvedic', 'url': C.DOCTOR_SITE},
-        'availableService': [{'@type': 'MedicalTherapy', 'name': t['name']} for t in C.THERAPIES],
-        'sameAs': [C.DOCTOR_SITE],
+        'availableService': [{'@type': 'MedicalTherapy', 'name': short_name(t['name']),
+                              'url': C.SITE_URL + url_for(t['slug'])} for t in TREATMENTS],
+        'telephone': C.PHONE,
+        'hasMap': 'https://www.google.com/maps?q=Bajrangpuri,+Patna,+Bihar',
+        'sameAs': [C.DOCTOR_SITE] + [u for _, u in C.SOCIAL],
     }
 
 
@@ -278,7 +402,7 @@ def do_scripts(page):
 
 NAV_COL1 = [('Home', ''), ('About', 'about/'), ('Our Doctor', 'specialists/'), ('Appointment', 'appointment/'),
             ('Contact', 'contact/')]
-NAV_COL2 = [('Therapies', 'services/'), ('Consultation', 'services/panchakarma-consultation/'), ('Journal', 'blog/'),
+NAV_COL2 = [('Therapies', 'services/'), ('Areas We Serve', 'areas-we-serve/'), ('Journal', 'blog/'),
             ('Panchakarma Explained', 'blog/what-is-panchakarma-explained-simply/')]
 
 
@@ -305,6 +429,14 @@ def do_nav(page):
         m = {'About': ('About', 'about/'), 'Services': ('Therapies', 'services/'), 'Blog': ('Journal', 'blog/'),
              'Specialists': ('Our Doctor', 'specialists/')}[label]
         set_navlink(a, m[0], m[1], page)
+    journal = next(a for a in links if a.select_one('.nav-text').get_text(strip=True) == 'Journal')
+    areas = copy.copy(journal)
+    set_navlink(areas, 'Areas We Serve', 'areas-we-serve/', page)
+    areas.attrs.pop('aria-current', None)
+    areas['class'] = [c for c in areas.get('class', []) if c != 'w--current']
+    journal.insert_after(areas)
+    btnwrap = one(page, '.nav-menu-button-wrapper', nav)
+    btnwrap.insert(0, BeautifulSoup(THEME_TOGGLE, 'html.parser').button)
     for t in nav.select('.dropdown-text'):
         txt(t, 'Explore')
     for box in nav.select('.drop-inner-box'):
@@ -325,7 +457,7 @@ def do_footer(page):
     menus = f.select('.footer-menu')
     nav1 = [('Home', ''), ('Therapies', 'services/'), ('About', 'about/'), ('Our Doctor', 'specialists/'), ('Contact', 'contact/')]
     nav2 = [('Journal', 'blog/'), (C.DOCTOR, C.DOCTOR_SITE), ('FAQ', '#faq'), ('Appointment', 'appointment/'),
-            ('Consultation', 'services/panchakarma-consultation/')]
+            ('Areas We Serve', 'areas-we-serve/')]
     txt(one(page, '.stroke', menus[0]), 'Navigation')
     txt(one(page, '.stroke', menus[1]), 'Resources')
     for spec, menu in ((nav1, menus[0]), (nav2, menus[1])):
@@ -335,22 +467,29 @@ def do_footer(page):
                 a['target'] = '_blank'
                 a['rel'] = 'noopener'
     socials = f.select('.footer-middle a.social-link')
-    for a, label in zip(socials, ['Instagram', 'YouTube', 'WhatsApp']):
+    for a, (label, url) in zip(socials, C.SOCIAL):
         txt(one(page, '.social-link-text', a), label)
-        a['href'] = '#'
-        a['data-todo'] = 'social'
-        a['aria-hidden'] = 'true'
-        a['tabindex'] = '-1'
-    for a in socials[3:]:
+        a['href'] = url
+        a['target'] = '_blank'
+        a['rel'] = 'noopener'
+        a['aria-label'] = f'{C.BRAND} on {label}'
+        for k in ('data-todo', 'aria-hidden', 'tabindex'):
+            a.attrs.pop(k, None)
+    for a in socials[len(C.SOCIAL):]:
         a.decompose()
     blocks = f.select('.copywrite-block > div')
-    blocks[0].clear(); blocks[0].append(NavigableString(C.PLACE))
-    txt(blocks[1], '© 2026 Sabka Ved Wellness')
-    blocks[2].clear()
-    blocks[2].append(NavigableString('Run by '))
-    a = page.s.new_tag('a', href=C.DOCTOR_SITE, target='_blank', rel='noopener', **{'class': 'company-link v2'})
-    a.string = C.DOCTOR_FULL
-    blocks[2].append(a)
+    for b, frag in zip(blocks, [
+            f'<strong>{C.NAP_NAME}</strong>, {C.NAP_ADDRESS}',
+            f'<a href="tel:{C.PHONE}" class="company-link v2">{C.PHONE_DISPLAY}</a> | '
+            f'<a href="{C.WA_LINK}" target="_blank" rel="noopener" class="company-link v2">WhatsApp</a>',
+            f'\u00a9 2026 {C.BRAND}. Run by <a href="{C.DOCTOR_SITE}" target="_blank" rel="noopener" '
+            f'class="company-link v2">{C.DOCTOR_FULL}</a>']):
+        b.clear()
+        for n in list(BeautifulSoup(frag, 'html.parser').contents):
+            b.append(n)
+        b['class'] = b.get('class', []) + ['svw-nap']
+    mid = f.select_one('.footer-middle')
+    mid.insert_after(BeautifulSoup(map_html('Map: Sabka Ved Wellness near Bajrang Puri, Patna'), 'html.parser'))
     imgwrap = page.s.select_one('.footer-img-wrapper')
     for img in imgwrap.select('img.footer-logo'):
         img['src'] = page.asset('img/footer-logo.svg'); img['alt'] = ''
@@ -364,6 +503,7 @@ def do_cta(page):
         return
     txt(one(page, 'h2', c), 'Begin with a conversation, not a commitment.')
     set_button(one(page, 'a.button', c), 'Book a Consultation', 'appointment/', page)
+    add_online_button(page, one(page, 'a.button', c))
 
 
 def do_first_visit(page):
@@ -411,36 +551,42 @@ def post_item(post):
 
 
 def guide_item(slug):
-    t = next(t for t in C.THERAPIES if t['slug'] == slug)
-    return dict(key='guide-' + slug, title=f"{t['name']}: what the therapy involves", href=f'services/{slug}/',
-                category='Therapy Guide', date=t['category'], img=t['img'], focus=FOCUS.get(t['img'], (0.5, 0.5)))
+    return tx_item(slug)
 
 
-def do_blog_section(page, items=None):
+def do_blog_section(page, items=None, tag='JOURNAL', title='Plain answers about Panchakarma, from the clinic.',
+                     para='Short reads for Patna families who want to understand Ayurvedic therapy before they book.'):
     sec = page.s.select_one('section.blog')
     if not sec:
         return
-    txt(one(page, '.tag-text', sec), 'JOURNAL')
-    txt(one(page, 'h2', sec), 'Plain answers about Panchakarma, from the clinic.')
-    txt(one(page, '.sub-para-wrap p', sec), 'Short reads for Patna families who want to understand Ayurvedic therapy before they book.')
+    txt(one(page, '.tag-text', sec), tag)
+    txt(one(page, 'h2', sec), title)
+    txt(one(page, '.sub-para-wrap p', sec), para)
     items = items or [post_item(p) for p in C.POSTS]
-    for card, it in zip(sec.select('a.blog-card'), items):
-        blog_card(page, card, it, '')
+    cards = sec.select('.w-dyn-item')
+    for card, it in zip(cards, items):
+        blog_card(page, one(page, 'a.blog-card', card), it, '')
+    for card in cards[len(items):]:
+        card.decompose()
 
 
-def do_faq(page):
+def do_faq(page, faqs=None, title='Questions families ask before they begin.'):
     sec = page.s.select_one('section.faq')
     if not sec:
         return
+    faqs = faqs or C.FAQ
     txt(one(page, '.tag-text', sec), 'FAQ')
-    txt(one(page, 'h2', sec), 'Questions families ask before they begin.')
+    txt(one(page, 'h2', sec), title)
     put_img(page, one(page, 'img.faq-img', sec), 'faq', 'stock-turmeric', 1.14, (0.25, 0.42),
             alt='Turmeric powder and fresh turmeric root', sizes='(max-width: 767px) 92vw, 470px')
     items = sec.select('.faq-iteam')
-    while len(items) < len(C.FAQ):
+    while len(items) < len(faqs):
         clone_after(items[-1])
         items = sec.select('.faq-iteam')
-    for it, (q, a) in zip(items, C.FAQ):
+    for it in items[len(faqs):]:
+        it.decompose()
+    items = sec.select('.faq-iteam')
+    for it, (q, a) in zip(items, faqs):
         txt(one(page, '.faq-title', it), q)
         txt(one(page, '.faq-para', it), a)
 
@@ -566,6 +712,27 @@ def fill_booking_form(page, form_block, kind):
     fail['role'] = 'alert'
 
 
+def local_section(page, with_map):
+    """'Our main services' and 'Areas we serve' blocks (local SEO playbook), built from template classes."""
+    main_links = ''.join(f'<li><a href="{page.link(url_for(x))}">{short_name(TX[x]["name"])} in Patna</a></li>'
+                         for x in CORE_SERVICES[:5])
+    area_links = ''.join(f'<li><a href="{page.link(h)}">Patients from {lbl}</a></li>' for lbl, h in LOCATION_LABELS)
+    mp = map_html('Map: Sabka Ved Wellness near Bajrang Puri, Patna') if with_map else ''
+    map_block = '<div style="margin-top:40px">' + mp + '</div>' if mp else ''
+    html_ = (f'<section class="section svw-local"><div class="w-layout-blockcontainer container w-container">'
+             f'<div class="sub-holder"><div class="sub-tag-wrap"><div class="dot"></div><div class="tag-text">VISIT US</div></div>'
+             f'<h2 class="sub-title black">Panchakarma near Bajrang Puri, Patna</h2></div>'
+             f'<div class="svw-links"><div class="detail-text w-richtext"><h3>Our main services</h3><ul>{main_links}</ul>'
+             f'</div>'
+             f'<div class="detail-text w-richtext"><h3>Areas we serve</h3><ul>{area_links}</ul>'
+             f'</div>'
+             f'<div class="detail-text w-richtext svw-nap"><h3>Find us</h3><p><strong>{C.NAP_NAME}</strong><br/>'
+             f'{C.NAP_ADDRESS}<br/><a href="tel:{C.PHONE}">{C.PHONE_DISPLAY}</a> | '
+             f'<a href="{C.WA_LINK}" target="_blank" rel="noopener">WhatsApp</a><br/>By appointment</p></div></div>'
+             f'{map_block}</div></section>')
+    return BeautifulSoup(html_, 'html.parser').section
+
+
 # ----------------------------------------------------------------------------------------------- pages
 def page_home(page):
     s = page.s
@@ -576,8 +743,8 @@ def page_home(page):
     for n in list(h1.contents):
         if isinstance(n, NavigableString):
             n.extract()
-    span.insert_before(NavigableString('Classical Panchakarma, '))
-    txt(span, 'Planned Around You')
+    span.insert_before(NavigableString('Panchakarma Centre '))
+    txt(span, 'in Patna')
     txt(one(page, 'p.hero', hero), 'Ayurvedic consultation and Panchakarma near Bajrang Puri, Patna. Every programme '
         'begins with Dr. Aditya Kunal\'s assessment and is shaped to your body, your season and your routine.')
     set_button(one(page, '.button-wrap.hero a.button', hero), 'Explore Therapies', 'services/', page)
@@ -615,7 +782,7 @@ def page_home(page):
     # services tabs
     sv = one(page, 'section.services')
     txt(one(page, '.tag-text', sv), 'THERAPIES')
-    txt(one(page, 'h2', sv), 'Classical therapies, prescribed with care.')
+    txt(one(page, 'h2', sv), 'Shirodhara, Abhyanga, Virechana and Basti in Patna.')
     tabs = [('Consultation and Nadi Pariksha', 'Pulse assessment, prakriti and a full history. The first step for '
              'everyone, and the moment the doctor decides what is right for you.', 'doctor-consult-desk-wide', (0.66, 0.42),
              'Dr. Aditya Kunal at his consultation desk'),
@@ -682,7 +849,8 @@ def page_home(page):
         'programme is structured.')
     txt(one(page, '.result-text', rs), 'At a glance')
     for li, (t, v) in zip(rs.select('.result-list'), [('Classical Panchakarma therapies', '5'),
-                                                       ('Supportive therapies', '9'), ('Phases in every programme', '3')]):
+                                                       ('Treatments explained on this site', str(len(TREATMENTS))),
+                                                       ('Phases in every programme', '3')]):
         txt(one(page, '.text-h5', li), t)
         txt(one(page, '.counter-wrap div', li), v)
     put_img(page, one(page, 'img.result-img', rs), 'result', 'doctor-manuscript-desk', 0.96, (0.6, 0.4),
@@ -695,6 +863,9 @@ def page_home(page):
     do_first_visit(page)
     do_blog_section(page)
     do_faq(page)
+    # playbook: "Our main services" + "Areas we serve" + embedded map on the homepage
+    faq = one(page, 'section.faq')
+    faq.insert_after(local_section(page, with_map=True))
     do_cta(page)
 
 
@@ -721,7 +892,7 @@ def do_benefit(page, home=False, therapy=None):
                  'Follow-up review with the doctor']
     else:
         t = therapy
-        put_img(page, one(page, 'img.benefit-img', b), 'benefit-' + t['slug'], t['img3'], 1.56,
+        put_img(page, one(page, 'img.benefit-img', b), img_key('benefit', t, t['img3']), t['img3'], 1.56,
                 FOCUS.get(t['img3']), alt=f'{C.DOCTOR} at Sabka Ved Wellness', sizes='(max-width: 767px) 92vw, 615px')
         txt(one(page, '.tag-text', b), 'HOW A PROGRAMME RUNS')
         txt(one(page, 'h2', b), 'Preparation, therapy, recovery. In that order.')
@@ -770,10 +941,10 @@ def page_about(page):
     sp = one(page, 'section.support')
     paras = sp.select('.support-para')
     txt(one(page, '.body-text-light', paras[0]), 'Classical and supportive therapies, practised at one centre in Patna.')
-    set_counter(one(page, '.count-num', sp), '14', '')
+    set_counter(one(page, '.count-num', sp), str(len(TREATMENTS)), '')
     txt(one(page, '.text-h5', paras[1]), 'Therapies under one roof')
-    txt(one(page, '.body-text-light', paras[1]), 'Five classical Panchakarma procedures and nine supportive therapies, '
-        'each used only when your plan calls for it.')
+    txt(one(page, '.body-text-light', paras[1]), 'From preparation to recovery, each therapy is used only when your '
+        'plan calls for it.')
     hs = one(page, 'section.history')
     txt(one(page, 'h2', hs), 'Why Sabka Ved Wellness exists.')
     txt(one(page, '.sub-para-wrap .body-text-dark', hs), 'Patna families deserve Ayurveda that is classical, careful '
@@ -808,7 +979,7 @@ def page_about(page):
             (0.34, 0.42), alt='Dr. Aditya Kunal with a notebook among medicinal plants',
             sizes='(max-width: 767px) 92vw, 542px')
     counters = [('5', '', 'Classical Panchakarma procedures.'),
-                ('9', '', 'Supportive therapies, from Abhyanga to Udvartana.'),
+                ('6', '', 'Therapy groups, from Purva Karma to Paschat Karma.'),
                 ('3', '', 'Phases in every programme: preparation, therapy, recovery.')]
     for cc, (v, suf, d) in zip(hl.select('.health-counter-content'), counters):
         set_counter(one(page, '.count-num', cc), v, suf)
@@ -818,62 +989,139 @@ def page_about(page):
 
 
 def page_services(page):
-    do_common_hero(page, 'Therapies', 'Panchakarma and Ayurvedic therapies in Patna.',
-                   'Every therapy is offered only after a consultation. Your plan may use one of them, several, or none, '
-                   'depending on what your assessment shows.', 'doctor-preparing-herbs', 2.1, (0.6, 0.42),
-                   'Dr. Aditya Kunal preparing herbal medicines')
-    lst = one(page, '.service-list')
-    items = lst.select('.w-dyn-item')
-    while len(items) < len(C.THERAPIES):
-        clone_after(items[-1])
-        items = lst.select('.w-dyn-item')
-    for i, (it, t) in enumerate(zip(items, C.THERAPIES)):
-        a = one(page, 'a.service-card', it)
-        a['href'] = page.link(f"services/{t['slug']}/")
-        txt(one(page, '.service-number', it), f'{i + 1:03d}/')
-        txt(one(page, '.text-h4', it), t['name'])
-        txt(one(page, '.service-para .body-text-dark', it), t['summary'])
-        put_img(page, one(page, 'img.service-main-img', it), 'svc-' + t['slug'], t['img'], 1.75,
-                FOCUS.get(t['img']), alt=f"{t['name']} at Sabka Ved Wellness, Patna",
-                sizes='(max-width: 767px) 92vw, 416px')
+    do_common_hero(page, 'Treatments', 'Panchakarma treatments in Patna.',
+                   f'{len(TREATMENTS)} classical and supportive therapies, from preparation to recovery. Every one is '
+                   'offered only after a consultation, and your plan may use a few of them or none.',
+                   'doctor-preparing-herbs', 2.1, (0.6, 0.42), 'Dr. Aditya Kunal preparing herbal medicines')
+    cms = one(page, '.service-cms')
+    proto_item = copy.copy(cms.select_one('.w-dyn-item'))
+    container = cms.parent
+    first = True
+    n = 0
+    for g in GROUP_ORDER:
+        group_tx = [t for t in TREATMENTS if t['group'] == g]
+        block = cms if first else copy.copy(cms)
+        if not first:
+            last_block.insert_after(block)
+        head = BeautifulSoup(f'<div class="sub-holder svw-group-title"><h2 class="sub-title black">{g}</h2>'
+                             f'<p class="body-text-dark">{GROUP_BLURB[g]}</p></div>', 'html.parser').div
+        block.insert_before(head)
+        lst = one(page, '.service-list', block)
+        for it in lst.select('.w-dyn-item'):
+            it.decompose()
+        for t in group_tx:
+            n += 1
+            it = copy.copy(proto_item)
+            lst.append(it)
+            a = one(page, 'a.service-card', it)
+            a['href'] = page.link(url_for(t['slug']))
+            txt(one(page, '.service-number', it), f'{n:03d}/')
+            txt(one(page, '.text-h4', it), short_name(t['name']))
+            first_sentence = re.split(r'(?<=[.!?])\s', t['summary'])[0]
+            txt(one(page, '.service-para .body-text-dark', it), first_sentence)
+            src, foc = tx_image(t)
+            put_img(page, one(page, 'img.service-main-img', it), img_key('svc', t, src), src, 1.75, foc,
+                    alt=t.get('image_alt') or f"{short_name(t['name'])} at Sabka Ved Wellness, Patna",
+                    sizes='(max-width: 767px) 92vw, 416px')
+        last_block = block
+        first = False
     do_first_visit(page)
     do_blog_section(page)
     do_faq(page)
     do_cta(page)
 
 
-def page_service_detail(page, t):
+def page_service_detail(page, t, kind='treatment'):
+    """Render a treatment, guide, location or hub page into the CMS service detail template."""
     sec = one(page, 'section.common')
-    txt(one(page, '.tag-text', sec), t['category'].upper())
-    txt(one(page, 'h1', sec), t['name'])
+    name = t['name']
+    if kind == 'treatment':
+        tag = (t.get('sanskrit') + '  ' if t.get('sanskrit') else '') + (paren(name) or t['group'])
+        h1 = f'{short_name(name)} in Patna'
+    else:
+        tag = t.get('tag') or ('Guide' if kind == 'guide' else 'Areas we serve')
+        h1 = name
+    txt(one(page, '.tag-text', sec), tag)
+    txt(one(page, 'h1', sec), h1)
     txt(one(page, '.service-content-wrapper > .body-text-dark', sec), t['summary'])
-    set_button(one(page, '.button-wrap.hero a.button', sec), 'Book Appointment', 'appointment/', page)
-    infos = [('Session', t['session']), ('Category', t['category']), ('Planning', 'After assessment')]
-    for w, (h, v) in zip(sec.select('.service-info-wrap'), infos):
+    hb = one(page, '.button-wrap.hero a.button', sec)
+    set_button(hb, 'Book Appointment', 'appointment/', page)
+    add_online_button(page, hb)
+    # at-a-glance chips
+    g = t.get('at_a_glance') or {}
+    chips = [(k, v) for k, v in [('Phase', g.get('phase')), ('Typical session', g.get('typical_session')),
+                                  ('Typical course', g.get('typical_course')), ('Dosha focus', g.get('dosha_focus')),
+                                  ('Supervision', g.get('supervision'))] if v]
+    wraps = sec.select('.service-info-wrap')
+    while len(wraps) < len(chips):
+        clone_after(wraps[-1])
+        wraps = sec.select('.service-info-wrap')
+    for w in wraps[len(chips):]:
+        w.decompose()
+    for w, (h, v) in zip(sec.select('.service-info-wrap'), chips):
         txt(one(page, '.text-h6', w), h)
-        txt(one(page, '.tiny-text', w), v)
-    put_img(page, one(page, 'img.service-card-img', sec), 'detail-' + t['slug'], t['img'], 0.96, FOCUS.get(t['img']),
-            alt=f"{t['name']} at Sabka Ved Wellness, Patna", sizes='(max-width: 767px) 92vw, 552px')
+        txt(one(page, '.tiny-text', w), v[0].upper() + v[1:])
+    src, foc = tx_image(t) if kind != 'hub' else ('doctor-clinic-nehru-jacket', (0.62, 0.4))
+    put_img(page, one(page, 'img.service-card-img', sec), img_key('detail', t, src), src, 0.96, foc,
+            alt=t.get('image_alt') or f'{short_name(name)} at Sabka Ved Wellness, Patna',
+            sizes='(max-width: 767px) 92vw, 552px')
+    # body
     rts = sec.select('.service-details-wrapper > .detail-text')
-    r0 = rts[0]
-    txt(one(page, 'h2', r0), 'What to expect')
-    ps = r0.find_all('p')
-    txt(ps[0], t['expect'][0])
-    txt(ps[2], t['expect'][1])
-    txt(one(page, 'h2', rts[1]), 'Who it is for')
-    txt(one(page, 'p', rts[1]), t['whofor'])
+    body = rts[0]
+    body.clear()
+    for node in list(BeautifulSoup(t['body_html'], 'html.parser').contents):
+        body.append(node)
+    for a in body.find_all('a', href=True):
+        if a['href'].startswith('http') and 'dradityakunal.com' not in a['href']:
+            a['target'] = '_blank'
+            a['rel'] = 'noopener'
+    src_block = rts[1]
+    src_block.clear()
+    if t.get('sources'):
+        h = page.s.new_tag('h2')
+        h.string = 'Sources'
+        src_block.append(h)
+        ul = page.s.new_tag('ul', **{'class': 'svw-sources'})
+        for so in t['sources']:
+            li = page.s.new_tag('li')
+            a = page.s.new_tag('a', href=so['url'], target='_blank', rel='noopener nofollow')
+            a.string = so['title']
+            li.append(a)
+            ul.append(li)
+        src_block.append(ul)
+    else:
+        src_block.decompose()
+    # feature card: local links
     fc = one(page, '.feature-card', sec)
-    txt(one(page, 'h3', fc), t['list_title'])
-    lis = fc.find_all('li')
-    for li, v in zip(lis, t['items']):
-        txt(li, v)
-    put_img(page, one(page, 'img.feature-img', sec), 'feat-' + t['slug'], t['img2'], 1.29, FOCUS.get(t['img2']),
-            alt='', sizes='(max-width: 767px) 92vw, 413px')
-    do_benefit(page, therapy=t)
+    fc_rt = one(page, '.detail-text', fc)
+    fc_rt.clear()
+    h3 = page.s.new_tag('h3')
+    if kind == 'treatment' or kind == 'guide':
+        h3.string = 'We also serve patients from'
+        items = LOCATION_LABELS
+    elif kind == 'location':
+        h3.string = 'Therapies we offer'
+        rel = set(t.get('related', []))
+        items = [(short_name(TX[x]['name']), url_for(x)) for x in CORE_SERVICES if x not in rel][:5]
+    else:
+        h3.string = 'Our main services'
+        items = [(short_name(TX[x]['name']), url_for(x)) for x in CORE_SERVICES[:3]]
+    fc_rt.append(h3)
+    fc_rt.append(links_ul(page, items))
+    fsrc, ffoc = tx_image(t, 1) if kind != 'hub' else ('doctor-herb-garden-walk', (0.53, 0.45))
+    put_img(page, one(page, 'img.feature-img', sec), img_key('feat', t, fsrc), fsrc, 1.29, ffoc, alt='',
+            sizes='(max-width: 767px) 92vw, 413px')
+    therapy = dict(slug=t['slug'], img3=tx_image(t, 2)[0] if kind != 'hub' else 'doctor-consult-desk-wide')
+    do_benefit(page, therapy=therapy)
     do_first_visit(page)
-    others = [post_item(p) for p in C.POSTS]
-    do_blog_section(page, others)
-    do_faq(page)
+    rel = [x for x in t.get('related', []) if x in TX][:3]
+    if kind == 'hub':
+        rel = ['why-panchakarma-is-expensive']
+    do_blog_section(page, [tx_item(x) for x in rel], tag='RELATED',
+                    title='Read next' if kind != 'treatment' else 'Related therapies',
+                    para='Pages that pair naturally with this one.')
+    do_faq(page, [tuple(f) for f in t.get('faqs', [])] or None,
+           title='Questions about ' + short_name(name) if kind == 'treatment' else 'Questions people ask')
     do_cta(page)
 
 
@@ -885,6 +1133,12 @@ def page_appointment(page):
     bk = one(page, 'section.booking')
     txt(one(page, '.tag-text', bk), 'Appointment request')
     txt(one(page, 'h2', bk), 'Your details')
+    note = BeautifulSoup(f'<p class="body-text-dark" style="margin-top:12px">Prefer to speak first from home? '
+                         f'<a href="{C.BOOKING_URL}" target="_blank" rel="noopener" style="text-decoration:underline">'
+                         f'Book an online consultation</a> with Dr. Aditya Kunal, or call '
+                         f'<a href="tel:{C.PHONE}" style="text-decoration:underline">{C.PHONE_DISPLAY}</a>.</p>',
+                         'html.parser').p
+    one(page, 'h2', bk).insert_after(note)
     fill_booking_form(page, one(page, '.w-form', bk), 'appointment')
     do_cta(page)
 
@@ -897,7 +1151,8 @@ def page_contact(page):
     put_img(page, one(page, 'img.contact-img', ct), 'contact', 'doctor-consult-desk-wide', 1.64, (0.66, 0.42),
             alt='Consultation desk at Sabka Ved Wellness', sizes='(max-width: 767px) 92vw, 575px')
     infos = ct.select('.contact-info-wrap')
-    for w, (label, value, href) in zip(infos, [('Location:', C.PLACE, C.MAPS), ('Hours:', 'By appointment', None)]):
+    for w, (label, value, href) in zip(infos, [('Call:', C.PHONE_DISPLAY, 'tel:' + C.PHONE),
+                                                ('WhatsApp:', C.PHONE_DISPLAY, C.WA_LINK)]):
         t = one(page, '.contact-text', w)
         a = t.find('a')
         for n in list(t.contents):
@@ -905,16 +1160,15 @@ def page_contact(page):
                 n.extract()
         a.insert_before(NavigableString(label + ' '))
         txt(a, value)
-        if href:
-            a['href'] = href
+        a['href'] = href
+        if href.startswith('http'):
             a['target'] = '_blank'
             a['rel'] = 'noopener'
-        else:
-            a['href'] = page.link('appointment/')
     infos[0].find('img')['alt'] = ''
     infos[1].find('img')['alt'] = ''
-    txt(one(page, '.contact-para .body-text-dark', ct), 'Phone and WhatsApp details will be listed here soon. Until '
-        'then, send a request through the form and keep your phone handy.')
+    txt(one(page, '.contact-para .body-text-dark', ct), f'{C.NAP_NAME}, {C.NAP_ADDRESS}. All visits are by '
+        'appointment. Online consultations are available before you travel.')
+    ct.insert_after(local_section(page, with_map=False))
     ft = one(page, '.contact-form-title', ct)
     txt(one(page, '.text-h4', ft), 'Request a consultation')
     txt(one(page, '.body-text-dark', ft), 'Share your details and preferred date. Any therapy is planned only after '
@@ -974,7 +1228,7 @@ def page_blog(page):
     l2 = lists[1].select('.w-dyn-item')
     blog_card(page, one(page, 'a.blog-card', l1[0]), post_item(C.POSTS[0]), '')
     blog_card(page, one(page, 'a.blog-card', l1[1]), post_item(C.POSTS[1]), '')
-    second = [post_item(C.POSTS[2]), guide_item('panchakarma-consultation'), guide_item('shirodhara')]
+    second = [post_item(C.POSTS[2]), guide_item('why-panchakarma-is-expensive'), guide_item('shirodhara')]
     for it, item in zip(l2, second):
         blog_card(page, one(page, 'a.blog-card', it), item, '')
     for it in l2[len(second):]:
@@ -1017,7 +1271,7 @@ def page_post(page, post):
     txt(one(page, 'p', rts[-1]), post['end_p'])
     more = one(page, 'section.more')
     txt(one(page, 'h2', more), 'Related reading')
-    rel = [post_item(p) for p in C.POSTS if p is not post] + [guide_item('panchakarma-consultation')]
+    rel = [post_item(p) for p in C.POSTS if p is not post] + [guide_item('why-panchakarma-is-expensive')]
     for card, it in zip(more.select('a.blog-card'), rel):
         blog_card(page, card, it, '')
     do_cta(page)
@@ -1117,7 +1371,7 @@ def build_css():
     os.makedirs(os.path.join(ASSETS, 'css'), exist_ok=True)
     open(os.path.join(ASSETS, 'css', CSS_NAME), 'w').write(out)
     for fn in os.listdir(os.path.join(ASSETS, 'css')):
-        if fn != CSS_NAME:
+        if fn not in (CSS_NAME, 'theme.css'):
             os.remove(os.path.join(ASSETS, 'css', fn))
 
 
@@ -1130,6 +1384,14 @@ def copy_assets():
         if fn.endswith('.svg') or fn.endswith('.png'):
             shutil.copy2(os.path.join(ASSETS_IN, 'img', fn), os.path.join(ASSETS, 'img', fn))
     shutil.copy2(os.path.join(HERE, 'booking.js'), os.path.join(ASSETS, 'js', 'booking.js'))
+    shutil.copy2(os.path.join(HERE, 'theme.js'), os.path.join(ASSETS, 'js', 'theme.js'))
+    tpl = open(os.path.join(HERE, 'theme.css.tpl')).read()
+    shared, dark = tpl.split('/* ---- dark theme.', 1)
+    dark = '/* ---- dark theme.' + dark
+    os_pref = dark.replace('%D% ', 'html:not([data-theme="light"]) ')
+    stored = dark.replace('%D% ', 'html[data-theme="dark"] ')
+    open(os.path.join(ASSETS, 'css', 'theme.css'), 'w').write(
+        shared + '\n@media (prefers-color-scheme: dark){\n' + os_pref + '\n}\n' + stored)
     # lenis self-hosted (unchanged library)
     logos.write_all(os.path.join(ASSETS, 'img'))
 
@@ -1171,6 +1433,44 @@ def build_page(raw_name, out_rel, depth, fn, seo, *args):
     return out_rel, left
 
 
+def write_redirect(rel, target):
+    url = C.SITE_URL + target
+    depth = rel.count('/') - 0
+    relt = '../' * (rel.count('/')) + target
+    html_ = (f'<!DOCTYPE html><html lang="en-IN"><head><meta charset="utf-8"/><title>Moved | {C.BRAND}</title>'
+             f'<meta name="robots" content="noindex"/><link rel="canonical" href="{url}"/>'
+             f'<meta http-equiv="refresh" content="0; url={relt}"/></head><body>'
+             f'<p>This page has moved to <a href="{relt}">{url}</a>.</p></body></html>')
+    path = os.path.join(OUT, rel)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    open(path, 'w').write(html_)
+
+
+AREAS_BODY = (
+    '<p>Sabka Ved Wellness has one address: near Bajrang Puri, Patna, Bihar. We do not run branches or partner '
+    'centres. What we do offer is a way for patients outside Patna to plan Panchakarma sensibly: an online '
+    'consultation with Dr. Aditya Kunal first, then one well-planned trip for the therapies that suit you.</p>'
+    '<h2>Patients we see</h2><ul>'
+    '<li><a href="../best-panchakarma-in-patna/">Patna</a>: families across the city who want doctor-led Panchakarma close to home.</li>'
+    '<li><a href="../best-panchakarma-in-bihar/">Bihar</a>: patients from other districts who travel to Patna for a planned programme.</li>'
+    '<li><a href="../panchakarma-for-jharkhand-patients/">Jharkhand</a>: patients from Ranchi, Dhanbad and nearby who come by train or road.</li>'
+    '<li><a href="../panchakarma-for-uttar-pradesh-patients/">Uttar Pradesh</a>: patients from eastern UP and beyond who plan a stay in Patna.</li>'
+    '<li><a href="../panchakarma-for-delhi-patients/">Delhi</a>: patients who consult online first and fly or take the train to Patna.</li>'
+    '</ul><h2>How a visit from outside Patna usually works</h2><ol>'
+    '<li>Book an online consultation and share your reports and current medicines.</li>'
+    '<li>Dr. Aditya Kunal tells you whether Panchakarma suits you and how many days to plan for.</li>'
+    '<li>You plan travel and a stay in Patna around those days.</li>'
+    '<li>Therapies begin only after an in-person check at the centre.</li></ol>'
+    '<p>Ready to start? <a href="../appointment/">Request an appointment</a> or call +91 91020 00359.</p>')
+AREAS_FAQ = [
+    ('Do you have centres outside Patna?', 'No. Sabka Ved Wellness has one centre, near Bajrang Puri in Patna, Bihar.'),
+    ('Can I consult before travelling to Patna?', 'Yes. An online consultation with Dr. Aditya Kunal is the usual first '
+     'step for patients from outside Patna, so you only travel if Panchakarma suits you.'),
+    ('How long should I plan to stay in Patna?', 'It depends on the programme. Some therapies need a few days, a full '
+     'Panchakarma programme often needs one to three weeks. The doctor confirms this after assessment.'),
+]
+
+
 def seo(title, desc, path, og='img/og-home.jpg', **kw):
     d = dict(title=title, desc=desc, path=path, og_img=og)
     d.update(kw)
@@ -1205,7 +1505,8 @@ def main():
     B = lambda *a: results.append(build_page(*a))  # noqa: E731
     seo_kw = {}
     B('index', 'index.html', 0, page_home, seo(
-        'Panchakarma in Patna | Sabka Ved Wellness | Dr. Aditya Kunal',
+        'BEST Panchakarma Centre in Patna | Sabka Ved Wellness | Dr. Aditya Kunal, BAMS | Shirodhara, Basti, '
+        'Virechana, Abhyanga and Ayurvedic Therapies near me',
         'Doctor-led Panchakarma and Ayurvedic therapies near Bajrang Puri, Patna. Consultation and nadi pariksha '
         'with Dr. Aditya Kunal, BAMS. By appointment.', '', extra_ld=[faq_ld()]))
     B('about', 'about/index.html', 1, page_about, seo(
@@ -1213,14 +1514,50 @@ def main():
         'Sabka Ved Wellness is a Panchakarma and Ayurvedic therapy centre near Bajrang Puri, Patna, run by Dr. Aditya '
         'Kunal, BAMS. Classical, careful and doctor-led.', 'about/'))
     B('services', 'services/index.html', 1, page_services, seo(
-        'Panchakarma Therapies in Patna | Vamana, Virechana, Basti | Sabka Ved Wellness',
-        'Panchakarma consultation, the classical five (Vamana, Virechana, Basti, Nasya, Raktamokshana) and supportive '
-        'therapies like Abhyanga and Shirodhara in Patna, planned after assessment.', 'services/'))
-    for t in C.THERAPIES:
-        og = bank.jpg('og-' + t['slug'], t['img'], (1200, 630), FOCUS.get(t['img']))
-        B('service-detail', f"services/{t['slug']}/index.html", 2, page_service_detail, seo(
-            f"{t['name']} in Patna | Panchakarma | Sabka Ved Wellness", t['summary'], f"services/{t['slug']}/",
-            og=og), t)
+        f'Panchakarma Treatments in Patna | {len(TREATMENTS)} Therapies | Sabka Ved Wellness',
+        'Every Panchakarma therapy at Sabka Ved Wellness, Patna, from Snehapana and Abhyanga to Virechana, Basti, '
+        'Shirodhara and Rasayana, planned after assessment.', 'services/'))
+    def tx_seo(t, path):
+        src, foc = tx_image(t)
+        og = bank.jpg(img_key('og', t, src), src, (1200, 630), foc)
+        faq = {'@context': 'https://schema.org', '@type': 'FAQPage',
+               'mainEntity': [{'@type': 'Question', 'name': q, 'acceptedAnswer': {'@type': 'Answer', 'text': a}}
+                              for q, a in t['faqs']]} if t.get('faqs') else None
+        crumbs = {'@context': 'https://schema.org', '@type': 'BreadcrumbList', 'itemListElement': [
+            {'@type': 'ListItem', 'position': 1, 'name': 'Home', 'item': C.SITE_URL}] + (
+            [{'@type': 'ListItem', 'position': 2, 'name': 'Treatments', 'item': C.SITE_URL + 'services/'}]
+            if path.startswith('services/') else []) + [
+            {'@type': 'ListItem', 'position': 3 if path.startswith('services/') else 2, 'name': short_name(t['name']),
+             'item': C.SITE_URL + path}]}
+        lds = [x for x in (faq, crumbs) if x]
+        if t['group'] not in ('Location', 'Guide'):
+            lds.append({'@context': 'https://schema.org', '@type': 'MedicalTherapy', 'name': short_name(t['name']),
+                        'alternateName': t.get('sanskrit') or None, 'description': t['summary'],
+                        'url': C.SITE_URL + path, 'provider': {'@id': C.SITE_URL + '#clinic'}})
+        return seo(t['seo_title'], t['meta_description'], path, og=og, extra_ld=lds)
+
+    for t in TREATMENTS:
+        path = url_for(t['slug'])
+        B('service-detail', path + 'index.html', 2, page_service_detail, tx_seo(t, path), t, 'treatment')
+    for t in GUIDES + LOCATIONS:
+        path = url_for(t['slug'])
+        kind = 'guide' if t['group'] == 'Guide' else 'location'
+        B('service-detail', path + 'index.html', 1, page_service_detail, tx_seo(t, path), t, kind)
+    hub = dict(slug='areas-we-serve', name='Areas we serve', group='Location', tag='Patna, Bihar and beyond',
+               summary='Sabka Ved Wellness is one Panchakarma centre, near Bajrang Puri in Patna. Patients come from '
+                       'across Patna and Bihar, and from Jharkhand, Uttar Pradesh and Delhi, usually after an online '
+                       'consultation first.',
+               at_a_glance={'phase': 'Centre in Patna, Bihar', 'typical_session': 'By appointment',
+                            'typical_course': 'Online consultation available before travel',
+                            'supervision': 'Doctor-led, Dr. Aditya Kunal, BAMS'},
+               body_html=AREAS_BODY, faqs=AREAS_FAQ, sources=[], related=[])
+    B('service-detail', 'areas-we-serve/index.html', 1, page_service_detail, seo(
+        'Areas We Serve | Panchakarma for Patna, Bihar, Jharkhand, UP and Delhi | Sabka Ved Wellness',
+        'Sabka Ved Wellness in Patna sees Panchakarma patients from Patna, Bihar, Jharkhand, Uttar Pradesh and Delhi. '
+        'Consult online first, then plan one trip.', 'areas-we-serve/',
+        extra_ld=[{'@context': 'https://schema.org', '@type': 'FAQPage', 'mainEntity': [
+            {'@type': 'Question', 'name': q, 'acceptedAnswer': {'@type': 'Answer', 'text': a}} for q, a in AREAS_FAQ]}]),
+      hub, 'hub')
     B('appointment', 'appointment/index.html', 1, page_appointment, seo(
         'Book a Panchakarma Consultation in Patna | Sabka Ved Wellness',
         'Request a Panchakarma or Ayurvedic consultation with Dr. Aditya Kunal, BAMS, near Bajrang Puri, Patna. '
@@ -1259,7 +1596,10 @@ def main():
             bad = True
             print('LEFTOVER URLS in', rel, sorted(set(left))[:10])
     # sitemap + robots
-    urls = ['', 'about/', 'services/'] + [f"services/{t['slug']}/" for t in C.THERAPIES] + \
+    for old, target in OLD_REDIRECTS.items():
+        write_redirect(f'services/{old}/index.html', target)
+    urls = ['', 'about/', 'services/'] + [url_for(t['slug']) for t in TREATMENTS] + \
+           [url_for(t['slug']) for t in GUIDES + LOCATIONS] + ['areas-we-serve/'] + \
            ['appointment/', 'contact/', 'specialists/', 'blog/'] + [f"blog/{p['slug']}/" for p in C.POSTS]
     sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for u in urls:
@@ -1279,6 +1619,8 @@ def main():
     keep = {'favicon-512.png'}
     removed = 0
     for fn in os.listdir(os.path.join(ASSETS, 'img')):
+        if os.path.isdir(os.path.join(ASSETS, 'img', fn)):
+            continue
         if fn not in refs and fn not in keep:
             os.remove(os.path.join(ASSETS, 'img', fn))
             removed += 1

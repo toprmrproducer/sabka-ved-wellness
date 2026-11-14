@@ -8,7 +8,7 @@
  */
 (function () {
   'use strict';
-  var WA_NUMBER = '';
+  var WA_NUMBER = '919102000359';
 
   var DONE_PENDING = 'Thank you. Online booking is opening shortly. Please call or WhatsApp the clinic to confirm your slot.';
   var DONE_WA = 'Thank you. WhatsApp has opened with your request filled in. Please press send there so the clinic can confirm your slot.';
